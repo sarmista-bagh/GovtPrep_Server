@@ -1,32 +1,41 @@
-
-
 const express = require("express");
+
+const connectDB = require("./config/database");
+
+const User = require("./models/user");
 
 const app = express();
 
+app.use(express.json());
 
+// Creating a new instance of the User model
+app.post("/signup", async (req, res) => {
 
-//This will only handle GET call to /user
-app.get("/user", (req, res) => {
-    res.send({ firstName: "Sarmista" })
+    const user = new User(req.body);
 
-})
-app.post("/user", (req, res) => {
-    //saving data in db
-    res.send("Data Successfull saved  to the database")
-})
-app.delete("/user", (req, res) => {
-    res.send("Data deleted syccessfully...")
-})
+    console.log(user);
 
-//This will match all the HTTP method PAI calls to /test
-app.use("/test", (req, res) => {
-    res.send("listing port 5010 server")
-})
-// app.use("/", (req, res) => {
-//     res.send("Hii Sarmista");
-// })
-app.listen(5010, () => {
-    console.log("Server is Successfully listening on port 5010...");
-})
+    // Save the user into MongoDB
+    try {
+        await user.save();
 
+        res.send("User Added Successfully...");
+    } catch (err) {
+        res.status(400).send("Error saving the user: " + err.message);
+    }
+});
+
+// Connecting to MongoDB first,
+// and only after a successful connection,
+// starting the Express server.
+connectDB()
+    .then(() => {
+        console.log("Database connection established...");
+
+        app.listen(5010, () => {
+            console.log("Server is listening on port 5010...");
+        });
+    })
+    .catch((err) => {
+        console.error("Database cannot be connected...", err);
+    });
